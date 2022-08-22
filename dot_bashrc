@@ -138,3 +138,5 @@ SSL_CERT_DIR=/etc/ssl/certs
 export GRADLE_HOME
 
 source ~/.profile
+
+[ -f ~/.fzf.bash ] && source ~/.fzf.bash
