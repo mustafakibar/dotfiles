@@ -11,11 +11,11 @@ fi
 # Path to your oh-my-zsh installation.
 export ZSH=$HOME/.oh-my-zsh
 
-ZSH_THEME="spaceship"
+#ZSH_THEME="spaceship"
 #ZSH_THEME="powerlevel10k/powerlevel10k"
-#ZSH_THEME="lambda_mod/lambda-mod"
+ZSH_THEME="lambda_mod/lambda-mod"
 #source ~/geometry/geometry.zsh
-#source ~/headline.zsh-theme
+source ~/headline.zsh-theme
 
 plugins=(
   npm
@@ -28,6 +28,7 @@ plugins=(
   zsh-autosuggestions
   colored-man-pages
   command-not-found
+  last-working-dir
 )
 
 setopt AUTO_PUSHD

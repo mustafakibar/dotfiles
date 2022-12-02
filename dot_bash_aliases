@@ -1,12 +1,11 @@
 alias update='sudo -- sh -c "apt update && apt upgrade"'
-alias updateg='find ${~} -maxdepth 2 -type d -name .git -exec git --git-dir={}/ --work-tree=$PWD/{} pull \;'
+alias updateg='find ~ -maxdepth 2 -type d -name .git -print0 | xargs -0 -I{} git -C {} --work-tree={} pull -v'
 alias autorem='sudo apt autoremove -y'
-
-alias ~='cd ~'
 
 alias c='clear'
 alias {e,q}='exit'
 
+alias ~='cd ~'
 alias cd..='cd ..'
 alias ..='cd ..'
 alias ...='cd ../../../'
@@ -22,7 +21,6 @@ alias fgrep='fgrep --color=auto'
 alias mv='mv -i'
 alias cp='cp -i'
 alias ln='ln -i'
-
 alias rm='rm -I --preserve-root'
 
 alias chown='chown --preserve-root'
@@ -46,4 +44,6 @@ alias du="dust"
 alias cat="bat"
 alias time="hyperfine"
 alias cloc="tokei"
-
+alias co="code"
+alias nv="nvim"
+alias pn="pnpm"
