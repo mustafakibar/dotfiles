@@ -2,9 +2,6 @@ local status, ts = pcall(require, "nvim-treesitter.configs")
 if (not status) then return end
 
 ts.setup {
-  context_commentstring = {
-    enable = true
-  },
   highlight = {
     enable = true,
     disable = {},
@@ -16,18 +13,22 @@ ts.setup {
   ensure_installed = {
     "tsx",
     "toml",
-    "fish",
-    "php",
     "json",
     "yaml",
-    "swift",
     "css",
     "html",
-    "lua"
+    "lua",
+    "rust",
+    "java",
+    "kotlin"
   },
   autotag = {
     enable = true,
   },
+}
+
+require('ts_context_commentstring').setup {
+  enable_autocmd = false,
 }
 
 local parser_config = require "nvim-treesitter.parsers".get_parser_configs()

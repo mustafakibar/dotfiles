@@ -1,0 +1,64 @@
+# --- SYSTEM ---
+alias upt='sudo apt update'
+alias upg='sudo -- sh -c "apt update && apt upgrade"'
+alias aptclean='sudo apt autoremove -y'
+alias c='clear'
+alias {e,q}='exit'
+
+# --- POWER ---
+alias rb='sudo /sbin/reboot'
+alias po='sudo /sbin/poweroff'
+alias sd='sudo /sbin/shutdown'
+
+# --- NAVIGATION ---
+alias ..='cd ..'
+alias ...='cd ../../../'
+alias ~='cd ~'
+
+# --- MODERN REPLACEMENTS (RUST TOOLS) ---
+
+# Replace 'cat' with 'bat' (syntax highlighting)
+if command -v batcat &> /dev/null; then
+    alias cat='batcat'
+elif command -v bat &> /dev/null; then
+    alias cat='bat'
+fi
+
+# Replace 'find' with 'fd' (faster)
+if command -v fdfind &> /dev/null; then
+    alias find='fdfind'
+elif command -v fd &> /dev/null; then
+    alias find='fd'
+fi
+
+# Replace 'ls' with 'eza' (icons & git status)
+alias ls='eza --icons=always'
+alias ll='eza --icons=always -l'
+alias la='eza --icons=always -la'
+alias ltree='eza --icons=always -l --tree --no-user --no-permissions --no-filesize --level=2'
+
+# --- STANDARD UTILITIES ---
+alias grep='grep --color=auto'
+alias mv='mv -i'
+alias cp='cp -i'
+alias rm='rm -I --preserve-root'
+alias vim='nvim'
+alias vi='nvim'
+
+# --- NETWORK & INFO ---
+alias ports='netstat -tulanp'
+alias myip='curl ifconfig.me'
+alias openports='ss -tulwn'
+alias mem='free -h'
+alias freemem='watch -n 1 free -h'
+alias diskuse='df -Th | grep -Ev "tmpfs|loop"'
+
+# --- GIT SHORTCUTS ---
+alias g='git'
+alias gs='git status'
+alias ga='git add'
+alias gaa='git add .'
+alias gc='git commit -m'
+alias gp='git push'
+alias gl='git pull'
+alias gco='git checkout'

@@ -22,22 +22,10 @@ vim.opt.smarttab = true
 vim.opt.expandtab = true
 vim.opt.breakindent = true
 vim.opt.tabstop = 2
-vim.opt.wrap = false -- No Wrap lines
+vim.opt.wrap = true
 vim.opt.backspace = { 'start', 'eol', 'indent' }
 vim.opt.path:append { '**' } -- Finding files - Search down into subfolders
 vim.opt.wildignore:append { '*/node_modules/*' }
-
--- Undercurl
-vim.cmd([[let &t_Cs = "\e[4:3m"]])
-vim.cmd([[let &t_Ce = "\e[4:0m"]])
-
--- Turn off paste mode when leaving insert
-vim.api.nvim_create_autocmd("InsertLeave", {
-  pattern = '*',
-  command = "set nopaste"
-})
-
--- Add asterisks in block comments
 vim.opt.formatoptions:append { 'r' }
 vim.opt.cursorline = true
 vim.opt.termguicolors = true
@@ -45,3 +33,15 @@ vim.opt.winblend = 0
 vim.opt.wildoptions = 'pum'
 vim.opt.pumblend = 5
 vim.opt.clipboard:append { 'unnamedplus' }
+
+vim.deprecate = function() end
+
+-- Undercurl
+vim.cmd([[let &t_Cs = "\e[3:3m"]])
+vim.cmd([[let &t_Ce = "\e[3:0m"]])
+
+-- Turn off paste mode when leaving insert
+vim.api.nvim_create_autocmd("InsertLeave", {
+  pattern = '*',
+  command = "set nopaste"
+})
