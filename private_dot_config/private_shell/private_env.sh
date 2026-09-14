@@ -10,13 +10,31 @@
 # Dizin mevcut değilse veya PATH'te zaten varsa hiçbir şey yapmaz.
 _kb_path_prepend() {
   [ -d "$1" ] || return 0
-  case ":${PATH}:" in *":$1:"*) return 0 ;; esac
+  # Membership test: iterate PATH components to avoid glob injection
+  _kb_old_ifs="$IFS"
+  IFS=:
+  for _kb_dir in $PATH; do
+    if [ "$_kb_dir" = "$1" ]; then
+      IFS="$_kb_old_ifs"
+      return 0
+    fi
+  done
+  IFS="$_kb_old_ifs"
   PATH="$1${PATH:+:$PATH}"
 }
 
 _kb_path_append() {
   [ -d "$1" ] || return 0
-  case ":${PATH}:" in *":$1:"*) return 0 ;; esac
+  # Membership test: iterate PATH components to avoid glob injection
+  _kb_old_ifs="$IFS"
+  IFS=:
+  for _kb_dir in $PATH; do
+    if [ "$_kb_dir" = "$1" ]; then
+      IFS="$_kb_old_ifs"
+      return 0
+    fi
+  done
+  IFS="$_kb_old_ifs"
   PATH="${PATH:+$PATH:}$1"
 }
 
