@@ -1,0 +1,23 @@
+[character]
+success_symbol = "[⚡](bold yellow)"
+error_symbol = "[⚡](bold red)"
+
+[directory]
+truncation_length = 3
+truncation_symbol = "…/"
+style = "bold blue"
+
+[git_branch]
+symbol = "git "
+style = "bold purple"
+
+[package]
+disabled = true
+
+[nodejs]
+symbol = "⬢ "
+style = "bold green"
+
+[rust]
+symbol = "🦀 "
+style = "bold red"
