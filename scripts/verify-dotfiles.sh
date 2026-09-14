@@ -21,20 +21,29 @@ no()   { printf '\033[31m FAIL\033[0m  %-5s %s\n' "$1" "$2"
          [ -n "${3:-}" ] && printf '              → %s\n' "$3"; FAIL=$((FAIL+1)); }
 sk()   { printf '\033[33m SKIP\033[0m  %-5s %s\n' "$1" "$2"; SKIP=$((SKIP+1)); }
 
-# zsh'i verilen TERM_PROGRAM ile 5 kez açıp "ortalama_ms zaman_aşımı_sayısı"
-# döndürür (tek satır, boşlukla ayrılmış — çağıran `read` ile ayrıştırır;
-# zsh_ms bir command substitution içinde çalıştığından bir global değişkene
-# yazmak ana kabuğa geri yansımaz).
+# zsh'i verilen TERM_PROGRAM ile 3 ısınma + 15 ölçüm iterasyonu ile açıp
+# "ortalama_ms zaman_aşımı_sayısı" döndürür (tek satır, boşlukla ayrılmış —
+# çağıran `read` ile ayrıştırır; zsh_ms bir command substitution içinde
+# çalıştığından bir global değişkene yazmak ana kabuğa geri yansımaz).
 zsh_ms() {
-  local tp="$1" n=5 t0 t1 i rc hits=0
+  local tp="$1" warmup=3 measured=15 t0 t1 i rc hits=0
+
+  # Warmup iterations (timing discarded)
+  for ((i=0; i<warmup; i++)); do
+    TERM_PROGRAM="$tp" timeout -k 3 10 zsh -i -c exit </dev/null >/dev/null 2>&1
+  done
+
+  # Measured iterations
   t0=$(date +%s%N)
-  for ((i=0; i<n; i++)); do
+  for ((i=0; i<measured; i++)); do
     TERM_PROGRAM="$tp" timeout -k 3 10 zsh -i -c exit </dev/null >/dev/null 2>&1
     rc=$?
     [ "$rc" -eq 124 ] && hits=$((hits+1))
   done
   t1=$(date +%s%N)
-  echo "$(( (t1 - t0) / (n * 1000000) )) $hits"
+
+  # Report mean in whole milliseconds
+  echo "$(( (t1 - t0) / (measured * 1000000) )) $hits"
 }
 
 echo "── Neovim ──────────────────────────────────────────"
@@ -133,14 +142,26 @@ if want D5; then
     if [ -z "$d" ]; then ok D5a "zsh PATH yinelemesiz"; else no D5a "zsh PATH yinelemesiz" "yinelenen: $d"; fi
   fi
 
-  probe=$(mktemp); printf 'echo ${#PATH}\n' > "$probe"
-  l1=$(timeout -k 3 10 zsh -ic ". $probe" </dev/null 2>/dev/null | tail -1); rc1=$?
-  l2=$(timeout -k 3 10 zsh -ic "zsh -ic '. $probe'" </dev/null 2>/dev/null | tail -1); rc2=$?
+  probe=$(mktemp); printf 'printf %%s "$PATH"' > "$probe"
+  l1=$(timeout -k 3 10 zsh -ic ". $probe" </dev/null 2>/dev/null); rc1=$?
+  l2=$(timeout -k 3 10 zsh -ic "zsh -ic '. $probe'" </dev/null 2>/dev/null); rc2=$?
   rm -f "$probe"
+
   if [ "$rc1" -eq 124 ] || [ "$rc2" -eq 124 ]; then
     no D5b "PATH iç içe shell'de sabit" "zaman aşımı: 1. seviye rc=$rc1, 2. seviye rc=$rc2 (124=zaman aşımı)"
-  elif [ -n "$l1" ] && [ "$l1" = "$l2" ]; then ok D5b "PATH iç içe shell'de sabit ($l1)"
-  else no D5b "PATH iç içe shell'de büyüyor" "1. seviye ${l1:-?} → 2. seviye ${l2:-?}"; fi
+  else
+    # Filter out fnm multishell paths (*/fnm_multishells/*/bin) from both levels
+    l1_filtered=$(printf '%s' "$l1" | tr ':' '\n' | grep -v '/fnm_multishells/' | sort)
+    l2_filtered=$(printf '%s' "$l2" | tr ':' '\n' | grep -v '/fnm_multishells/' | sort)
+
+    if [ "$l1_filtered" = "$l2_filtered" ]; then
+      ok D5b "PATH iç içe shell'de sabit"
+    else
+      # Find components in l2 that are not in l1
+      extra=$(comm -13 <(printf '%s' "$l1_filtered") <(printf '%s' "$l2_filtered") | tr '\n' ' ')
+      no D5b "PATH iç içe shell'de büyüyor" "ekstra: $extra"
+    fi
+  fi
 fi
 
 if want D6; then
