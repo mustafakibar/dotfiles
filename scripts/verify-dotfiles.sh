@@ -26,29 +26,28 @@ sk()   { printf '\033[33m SKIP\033[0m  %-5s %s\n' "$1" "$2"; SKIP=$((SKIP+1)); }
 # çağıran `read` ile ayrıştırır; zsh_ms bir command substitution içinde
 # çalıştığından bir global değişkene yazmak ana kabuğa geri yansımaz).
 zsh_ms() {
-  local tp="$1" warmup=3 measured=15 t0 t1 i
+  local tp="$1" out rc
 
-  # Hang koruması AYRI bir provada: tek bir timeout'lu çalıştırma.
-  # Ölçülen iterasyonlar BİLEREK timeout'suz — 'timeout' altında
-  # 'zsh -i' ~2x yavaş ölçülüyor (107ms yerine 204ms). Sebep: arka plan
-  # işçisi fork eden pluginler (zsh-autosuggestions async) timeout'un
-  # beklediği pipe'ı açık tutuyor, dolayısıyla ölçülen şey kabuk açılışı
-  # değil işçinin kapanışı oluyor. Ampirik olarak doğrulandı; --foreground
-  # bunu değiştirmiyor.
-  TERM_PROGRAM="$tp" timeout -k 3 15 zsh -i -c exit </dev/null >/dev/null 2>&1
-  if [ $? -eq 124 ]; then echo "-1 1"; return; fi
+  # Ölçüm TAMAMI tek bir timeout bütçesi altında (18 çalıştırma için 90s).
+  # Her iterasyonu ayrı ayrı sarmalamıyoruz: 'timeout' altında 'zsh -i'
+  # ~2x yavaş ölçülüyor (107ms yerine 204ms), çünkü arka plan işçisi fork
+  # eden pluginler (zsh-autosuggestions async) timeout'un beklediği pipe'ı
+  # açık tutuyor. '--foreground' bunu değiştirmiyor (ampirik olarak denendi).
+  #
+  # Zamanlama parantezleri alt kabuğun İÇİNDE olduğu için timeout'un o
+  # bekleyişi t1'den sonra gerçekleşir ve ölçüme hiç girmez; buna karşılık
+  # herhangi bir iterasyonda takılma olursa bütçe dolar ve FAIL verilir.
+  out=$(timeout -k 5 90 bash -c '
+    tp="$1"; warm=3; n=15
+    for ((i=0; i<warm; i++)); do TERM_PROGRAM="$tp" zsh -i -c exit </dev/null >/dev/null 2>&1; done
+    t0=$(date +%s%N)
+    for ((i=0; i<n; i++)); do TERM_PROGRAM="$tp" zsh -i -c exit </dev/null >/dev/null 2>&1; done
+    t1=$(date +%s%N)
+    echo $(( (t1 - t0) / (n * 1000000) ))
+  ' _ "$tp" 2>/dev/null)
+  rc=$?
 
-  for ((i=0; i<warmup; i++)); do
-    TERM_PROGRAM="$tp" zsh -i -c exit </dev/null >/dev/null 2>&1
-  done
-
-  t0=$(date +%s%N)
-  for ((i=0; i<measured; i++)); do
-    TERM_PROGRAM="$tp" zsh -i -c exit </dev/null >/dev/null 2>&1
-  done
-  t1=$(date +%s%N)
-
-  echo "$(( (t1 - t0) / (measured * 1000000) )) 0"
+  if [ "$rc" -eq 124 ] || [ -z "$out" ]; then echo "-1 1"; else echo "$out 0"; fi
 }
 
 echo "── Neovim ──────────────────────────────────────────"
