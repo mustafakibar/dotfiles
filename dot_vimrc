@@ -1,0 +1,222 @@
+" ~/.vimrc — plugin gerektirmeyen acil-durum config'i.
+"
+" Bu makinede /usr/bin/vim aslında nvim'e symlink; asıl Neovim config'i
+" ~/.config/nvim altındadır. Bu dosya şunlar için vardır:
+"   - vim.tiny (kurtarma modu, minimal kapsayıcılar)
+"   - Neovim'in olmadığı uzak sunucular
+"   - root shell'leri
+"
+" YAPI: Katman 1 her vim derlemesinde çalışır. Katman 2 tamamen
+" 'if 1 ... endif' içindedir; +eval olmayan derlemeler onu atlar.
+" Bu yüzden Katman 2'ye yeni satır eklerken bloğun DIŞINA taşma.
+
+" ══════════════════════════════════════════════════════════════════════
+" Katman 1 — özellik gerektirmeyen çekirdek
+" ══════════════════════════════════════════════════════════════════════
+set nocompatible
+
+set backspace=indent,eol,start
+set number
+set ruler
+set showcmd
+set hidden
+set autoindent
+set expandtab
+set shiftwidth=2
+set softtabstop=2
+set tabstop=2
+set smarttab
+set shiftround
+set scrolloff=5
+set sidescrolloff=8
+set laststatus=2
+set wildmenu
+set ignorecase
+set smartcase
+set hlsearch
+set nobackup
+set nowritebackup
+set noswapfile
+set history=1000
+set ttimeout
+set ttimeoutlen=50
+set splitbelow
+set splitright
+set title
+set autoread
+set lazyredraw
+set nrformats-=octal
+
+" Yerleşik bulucu: :find ile alt dizinlerde ara (CtrlP'nin yerine)
+set path+=**
+set wildignore+=*/node_modules/*,*/.git/*,*/dist/*,*/build/*,*/.next/*
+
+" ── tuşlar (mapping komutları +eval gerektirmez) ──────────────────────
+nnoremap <C-q> :q!<CR>
+nnoremap <C-s> :w<CR>
+nnoremap <F3>  :set hlsearch!<CR>
+nnoremap <F4>  :bd<CR>
+nnoremap <F5>  :Lexplore<CR>
+nnoremap n nzz
+nnoremap N Nzz
+nnoremap Y y$
+nnoremap Q <nop>
+nnoremap ; :
+nnoremap <Tab>   gt
+nnoremap <S-Tab> gT
+nnoremap <a-right> gt
+nnoremap <a-left>  gT
+nnoremap <silent> <S-t> :tabnew<CR>
+
+" nvim config'iyle tutarlı olsun diye eklendi (eski .vimrc'de yoktu)
+inoremap jk <Esc>
+
+" görsel modda girintiyi koru
+vnoremap < <gv
+vnoremap > >gv
+
+" imleci parantez/tırnak içine al
+inoremap <> <><Left>
+inoremap () ()<Left>
+inoremap {} {}<Left>
+inoremap [] []<Left>
+inoremap "" ""<Left>
+inoremap '' ''<Left>
+inoremap `` ``<Left>
+
+" insert modunda ok tuşu yerine
+inoremap <C-k> <Up>
+inoremap <C-j> <Down>
+inoremap <C-h> <Left>
+inoremap <C-l> <Right>
+inoremap <C-u> <Esc>ui
+
+" ══════════════════════════════════════════════════════════════════════
+" Katman 2 — +eval gerektiren her şey
+" ══════════════════════════════════════════════════════════════════════
+if 1
+  let mapleader = ','
+
+  filetype plugin indent on
+
+  if has('syntax')
+    syntax enable
+    set background=dark
+    silent! colorscheme habamax
+  endif
+
+  if has('extra_search')
+    set incsearch
+  endif
+
+  if has('termguicolors') && $COLORTERM =~# 'truecolor\|24bit'
+    set termguicolors
+  endif
+
+  if has('mouse')
+    set mouse=a
+  endif
+
+  if has('clipboard')
+    set clipboard=unnamedplus
+    vnoremap <C-p> "+p
+  endif
+
+  if has('linebreak')
+    set breakindent
+    set linebreak
+  endif
+
+  if has('multi_byte')
+    set encoding=utf-8
+    scriptencoding utf-8
+    set listchars=tab:→\ ,trail:·,extends:❯,precedes:❮,nbsp:␣
+  else
+    set listchars=tab:>\ ,trail:.,extends:>,precedes:<
+  endif
+
+  " ── kalıcı undo ────────────────────────────────────────────────────
+  if has('persistent_undo')
+    let s:undodir = expand('~/.local/state/vim/undo')
+    if !isdirectory(s:undodir)
+      silent! call mkdir(s:undodir, 'p', 0700)
+    endif
+    if isdirectory(s:undodir)
+      let &undodir = s:undodir
+      set undofile
+    endif
+  endif
+
+  " ── statusline (airline'ın yerine) ─────────────────────────────────
+  if has('statusline')
+    set statusline=
+    set statusline+=\ %f
+    set statusline+=\ %m%r%h%w
+    set statusline+=%=
+    set statusline+=\ %y
+    set statusline+=\ %{&fileencoding!=#''?&fileencoding:&encoding}
+    set statusline+=\ [%{&fileformat}]
+    set statusline+=\ %l:%c
+    set statusline+=\ %3p%%\
+  endif
+
+  " ── netrw (NERDTree'nin yerine) ────────────────────────────────────
+  let g:netrw_banner = 0
+  let g:netrw_liststyle = 3
+  let g:netrw_browse_split = 4
+  let g:netrw_altv = 1
+  let g:netrw_winsize = 25
+  let g:netrw_hide = 0
+
+  " ── matchit: % ile if/endif, açılış/kapanış etiketi eşleştirme ─────
+  if has('packages')
+    silent! packadd! matchit
+  else
+    silent! runtime macros/matchit.vim
+  endif
+
+  " ── imleç şekli: normal blok, insert çizgi ─────────────────────────
+  let &t_SI = "\e[6 q"
+  let &t_SR = "\e[4 q"
+  let &t_EI = "\e[2 q"
+
+  " ── italik ─────────────────────────────────────────────────────────
+  let &t_ZH = "\e[3m"
+  let &t_ZR = "\e[23m"
+
+  " ── leader tuşları ─────────────────────────────────────────────────
+  nnoremap <leader>h :nohlsearch<CR>
+  nnoremap <leader>w :w<CR>
+  nnoremap <leader>q :q<CR>
+  nnoremap <leader>l :set list!<CR>
+  nnoremap <leader>n :set relativenumber!<CR>
+
+  if has('terminal')
+    nnoremap <F6> :sp<CR>:terminal<CR>
+  elseif has('nvim')
+    nnoremap <F6> :sp<CR>:terminal<CR>
+  endif
+
+  " ── autocmd'ler ────────────────────────────────────────────────────
+  if has('autocmd')
+    augroup vimrc_restore_cursor
+      autocmd!
+      " dosyayı en son bırakılan satırda aç
+      autocmd BufReadPost *
+        \ if line("'\"") >= 1 && line("'\"") <= line("$") && &filetype !~# 'commit'
+        \ |   execute "normal! g`\""
+        \ | endif
+    augroup END
+
+    augroup vimrc_misc
+      autocmd!
+      " insert modundan çıkarken paste modunu kapat
+      autocmd InsertLeave * set nopaste
+      " yardım pencerelerini dikey aç
+      autocmd FileType help wincmd L
+    augroup END
+  endif
+
+  set relativenumber
+  set cursorline
+endif
