@@ -125,8 +125,6 @@ fi
 
 [[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
-. "$HOME/.atuin/bin/env"
-eval "$(atuin init bash)"
 
 # ─── ortak katman ─────────────────────────────────────────────────────────
 # PATH/env: env.sh (sentinel korumalı — .profile zaten yüklediyse atlar)
