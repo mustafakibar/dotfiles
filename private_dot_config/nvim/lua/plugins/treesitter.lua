@@ -11,7 +11,7 @@ return {
       local parsers = {
         'bash', 'css', 'diff', 'dockerfile', 'git_config', 'gitcommit',
         'gitignore', 'go', 'gomod', 'gosum', 'html', 'javascript', 'jsdoc',
-        'json', 'jsonc', 'lua', 'luadoc', 'markdown', 'markdown_inline',
+        'json', 'lua', 'luadoc', 'markdown', 'markdown_inline',
         'python', 'query', 'regex', 'rust', 'scss', 'toml', 'tsx',
         'typescript', 'vim', 'vimdoc', 'yaml',
       }
