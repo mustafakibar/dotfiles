@@ -1,0 +1,15 @@
+# ~/.profile — bash login shell'leri ve bazı display manager'lar tarafından okunur.
+#
+# Kendi PATH mantığı YOK: her şey ~/.config/shell/env.sh içinde (tek sahip).
+# zsh bu dosyayı okumaz; onun karşılığı ~/.zshenv.
+
+if [ -z "${KB_ENV_LOADED:-}" ]; then
+  KB_ENV_LOADED=1
+  export KB_ENV_LOADED
+  [ -r "$HOME/.config/shell/env.sh" ] && . "$HOME/.config/shell/env.sh"
+fi
+
+# Login bash ise interaktif yapılandırmayı da yükle.
+if [ -n "${BASH_VERSION:-}" ] && [ -f "$HOME/.bashrc" ]; then
+  . "$HOME/.bashrc"
+fi

@@ -1,62 +1,120 @@
-# --- ZSH SETTINGS ---
-DISABLE_AUTO_UPDATE="true"
-DISABLE_MAGIC_FUNCTIONS="true" # Speed up paste/completion
+# ~/.zshrc — yalnızca İNTERAKTİF zsh oturumları.
+# PATH ve ortam değişkenleri .zshenv → ~/.config/shell/env.sh içinde.
 
-export ZSH=$HOME/.oh-my-zsh
-ZSH_THEME="" # Disabled to allow Starship to take over
+# ─── Warp tespiti ─────────────────────────────────────────────────────────
+# Warp kendi shell katmanını kullanır ve ZLE widget'larıyla uyumsuzdur; kendi
+# dokümanı zsh-autosuggestions, fzf ve compinit'i uyumsuz olarak listeler:
+#   https://docs.warp.dev/support-and-community/troubleshooting-and-support/known-issues/
+#
+# ANCAK bu yalnızca Warp'ın DOĞRUDAN açtığı shell için geçerlidir.
+# nvim :terminal, tmux ve ssh $TERM_PROGRAM'ı miras alır ama orada gerçek ZLE
+# çalışır — o bağlamlarda her şeyi açıyoruz.
+if [[ $TERM_PROGRAM == WarpTerminal && -z $NVIM && -z $TMUX && -z $SSH_CONNECTION ]]; then
+  KB_WARP_NATIVE=1
+else
+  KB_WARP_NATIVE=0
+fi
 
-# --- PLUGINS ---
-# Minimized for performance. 
-# Warp handles syntax highlighting and autosuggestions natively.
-plugins=(
-  git
-  sudo
-  extract
-  copyfile
-  copybuffer
-  history
-)
+# ─── oh-my-zsh ────────────────────────────────────────────────────────────
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME=""                          # prompt Starship'e ait
+DISABLE_MAGIC_FUNCTIONS="true"        # yapıştırma/tamamlama hızı
+zstyle ':omz:update' mode disabled     # DISABLE_AUTO_UPDATE'in güncel karşılığı
 
-# --- HISTORY SETTINGS ---
-# Crucial for Warp and Atuin to function correctly
+# compinit dump'ını XDG cache'e taşı (ev dizinini kirletmesin)
+ZSH_COMPDUMP="$XDG_CACHE_HOME/zsh/zcompdump-$ZSH_VERSION"
+[[ -d $XDG_CACHE_HOME/zsh ]] || mkdir -p "$XDG_CACHE_HOME/zsh"
+
+plugins=(git sudo extract copyfile copybuffer)
+
+if (( ! KB_WARP_NATIVE )); then
+  # Sıra önemli: zsh-syntax-highlighting EN SONDA olmalı.
+  plugins+=(zsh-completions zsh-autosuggestions zsh-syntax-highlighting)
+
+  ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+  ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20      # uzun satırlarda öneriyi kapat (hız)
+  ZSH_AUTOSUGGEST_MANUAL_REBIND=1         # her prompt'ta yeniden bağlama
+fi
+
+# Temiz bir $HOME'da (chezmoi init sonrası, OMZ henüz kurulmamışken) her
+# shell açılışında hata basmasın diye korumalı source.
+if [[ -r $ZSH/oh-my-zsh.sh ]]; then
+  source "$ZSH/oh-my-zsh.sh"
+else
+  print -u2 "zshrc: oh-my-zsh bulunamadı ($ZSH) — ~/.local/share/chezmoi/scripts/bootstrap-tools.sh çalıştırın."
+fi
+
+# ─── geçmiş ───────────────────────────────────────────────────────────────
 HISTFILE="$HOME/.zsh_history"
-HISTSIZE=50000
-SAVEHIST=50000
-setopt HIST_EXPIRE_DUPS_FIRST
+HISTSIZE=100000
+SAVEHIST=100000
+
+setopt EXTENDED_HISTORY          # zaman damgası ve süre kaydet
+setopt HIST_EXPIRE_DUPS_FIRST    # budama gerekirse önce kopyaları at
 setopt HIST_IGNORE_DUPS
 setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_SPACE         # boşlukla başlayan komutu kaydetme
 setopt HIST_FIND_NO_DUPS
 setopt HIST_SAVE_NO_DUPS
-setopt SHARE_HISTORY
+setopt HIST_REDUCE_BLANKS        # fazla boşlukları temizle
+setopt HIST_VERIFY               # geçmiş genişletmesini çalıştırmadan önce göster
+setopt SHARE_HISTORY             # oturumlar arası anlık paylaşım
 
-# --- SOURCES ---
-source $HOME/.profile
-source $ZSH/oh-my-zsh.sh
+# ─── shell davranışı ──────────────────────────────────────────────────────
+setopt AUTO_CD                   # 'src' yaz, 'cd src' olsun
+setopt INTERACTIVE_COMMENTS      # interaktif satırda # yorum
+setopt GLOB_DOTS                 # glob gizli dosyaları da görsün
+setopt NUMERIC_GLOB_SORT         # file2 < file10
+setopt NO_BEEP
 
-# --- MODERN TOOLS (PERFORMANCE OPTIMIZED) ---
-
-# 1. FNM (Fast Node Manager) - Replaces NVM
-FNM_PATH="$HOME/.local/share/fnm"
-if [ -d "$FNM_PATH" ]; then
-  export PATH="$FNM_PATH:$PATH"
-  eval "$(fnm env --use-on-cd)"
+# ─── tamamlama ────────────────────────────────────────────────────────────
+if (( ! KB_WARP_NATIVE )); then
+  zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|=*' 'l:|=* r:|=*'
+  zstyle ':completion:*' menu select
+  zstyle ':completion:*' group-name ''
+  zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+  zstyle ':completion:*:descriptions' format '%F{yellow}── %d ──%f'
+  zstyle ':completion:*' use-cache on
+  zstyle ':completion:*' cache-path "$XDG_CACHE_HOME/zsh/zcompcache"
 fi
 
-# 2. Zoxide - Replaces Autojump
-eval "$(zoxide init zsh)"
-alias j='z'
+# ─── alias'lar ────────────────────────────────────────────────────────────
+[[ -r $XDG_CONFIG_HOME/shell/aliases.sh ]] && source "$XDG_CONFIG_HOME/shell/aliases.sh"
 
-# 3. Atuin - Shell History Sync
-if command -v atuin &> /dev/null; then
-    eval "$(atuin init zsh)"
+# ─── fnm (Node sürüm yöneticisi) ──────────────────────────────────────────
+# PATH girdisi env.sh'ta; burada yalnızca shell entegrasyonu.
+if command -v fnm >/dev/null 2>&1; then
+  eval "$(fnm env --use-on-cd --shell zsh)"
 fi
 
-# 4. Bun Completions (Lazy Load via fpath)
-[ -d "$HOME/.bun" ] && fpath=($HOME/.bun $fpath)
+# ─── zoxide ───────────────────────────────────────────────────────────────
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+  alias j='z'
+fi
 
-# 5. FZF - Fuzzy Finder
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# ─── fzf ──────────────────────────────────────────────────────────────────
+# ~/.fzf.zsh yoktu ve source edilmeye çalışılıyordu → tuşlar hiç bağlanmıyordu
+# (spec B4). Doğrusu fzf'in kendi ürettiği entegrasyon.
+if (( ! KB_WARP_NATIVE )) && command -v fzf >/dev/null 2>&1; then
+  source <(fzf --zsh)
 
-# --- THEME ---
-# Initialize Starship (Must be at the end)
-eval "$(starship init zsh)"
+  export FZF_DEFAULT_COMMAND='fd --type=file --hidden --follow --exclude=.git'
+  export FZF_DEFAULT_OPTS='--height=50% --layout=reverse --border=rounded --info=inline'
+
+  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  export FZF_CTRL_T_OPTS="--preview 'bat --style=numbers --color=always --line-range=:200 {}'"
+
+  export FZF_ALT_C_COMMAND='fd --type=directory --hidden --follow --exclude=.git'
+  export FZF_ALT_C_OPTS="--preview 'eza --tree --level=2 --icons=always --color=always {}'"
+fi
+
+# ─── bun ──────────────────────────────────────────────────────────────────
+[[ -s $HOME/.bun/_bun ]] && source "$HOME/.bun/_bun"
+
+# ─── prompt (en sonda) ────────────────────────────────────────────────────
+# Warp dahil her yerde: Warp'ın Starship için ayrı destek sayfası var,
+# ve ZSH_THEME boş olduğu için atlanırsa çıplak prompt kalır.
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init zsh)"
+fi
