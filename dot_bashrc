@@ -123,7 +123,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-[[ -f ~/.bash-preexec.sh ]] && source ~/.bash-preexec.sh
 
 
 # ─── ortak katman ─────────────────────────────────────────────────────────

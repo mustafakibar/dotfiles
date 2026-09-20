@@ -28,7 +28,26 @@ return {
         end, parsers)
       end
       if #to_install > 0 then
-        require('nvim-treesitter').install(to_install)
+        -- main branch parser derlemek için HARİCİ tree-sitter CLI (>= 0.26.1)
+        -- kullanır. Yoksa install() sessizce başarısız olur; gürültülü yapalım.
+        if vim.fn.executable('tree-sitter') == 0 then
+          vim.schedule(function()
+            vim.notify(
+              'nvim-treesitter: `tree-sitter` CLI bulunamadı, parser kurulamıyor.\n'
+                .. 'Kurulum: cargo install tree-sitter-cli --locked',
+              vim.log.levels.WARN
+            )
+          end)
+        else
+          local ok_install, err = pcall(function()
+            require('nvim-treesitter').install(to_install)
+          end)
+          if not ok_install then
+            vim.schedule(function()
+              vim.notify('nvim-treesitter install() hatası: ' .. tostring(err), vim.log.levels.ERROR)
+            end)
+          end
+        end
       end
 
       -- main branch highlight'ı KENDİ AÇMIYOR; vim.treesitter.start() gerekiyor.
@@ -38,8 +57,12 @@ return {
           local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
           if not lang then return end
           if not pcall(vim.treesitter.language.add, lang) then return end
-          pcall(vim.treesitter.start, ev.buf, lang)
-          vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          -- start() başarısız olursa (parser yok) indentexpr'i DEĞİŞTİRME;
+          -- aksi halde 'indents' sorgusu olmayan dillerde gg=G satırları düzleştirir.
+          if not pcall(vim.treesitter.start, ev.buf, lang) then return end
+          if vim.treesitter.query.get(lang, 'indents') then
+            vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end
         end,
       })
     end,

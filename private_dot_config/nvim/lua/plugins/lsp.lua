@@ -54,7 +54,10 @@ return {
       require('mason-lspconfig').setup({
         ensure_installed = {
           'vtsls', 'eslint', 'tailwindcss',
-          'lua_ls', 'rust_analyzer', 'ruff', 'basedpyright', 'gopls',
+          -- gopls KASITLI olarak listede değil: Go toolchain'i olmayan
+          -- makinede mason kurulumu başarısız olur. Go kurulduktan sonra
+          -- `:MasonInstall gopls` yeterli; vim.lsp yapılandırması hazır.
+          'lua_ls', 'rust_analyzer', 'ruff', 'basedpyright',
         },
         automatic_enable = true,
       })

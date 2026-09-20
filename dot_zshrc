@@ -36,7 +36,13 @@ if (( ! KB_WARP_NATIVE )); then
   ZSH_AUTOSUGGEST_MANUAL_REBIND=1         # her prompt'ta yeniden bağlama
 fi
 
-source "$ZSH/oh-my-zsh.sh"
+# Temiz bir $HOME'da (chezmoi init sonrası, OMZ henüz kurulmamışken) her
+# shell açılışında hata basmasın diye korumalı source.
+if [[ -r $ZSH/oh-my-zsh.sh ]]; then
+  source "$ZSH/oh-my-zsh.sh"
+else
+  print -u2 "zshrc: oh-my-zsh bulunamadı ($ZSH) — ~/.local/share/chezmoi/scripts/bootstrap-tools.sh çalıştırın."
+fi
 
 # ─── geçmiş ───────────────────────────────────────────────────────────────
 HISTFILE="$HOME/.zsh_history"

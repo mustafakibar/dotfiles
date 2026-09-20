@@ -35,6 +35,8 @@ vim.api.nvim_create_autocmd('BufWritePre', {
   callback = function()
     -- markdown'da satır sonundaki iki boşluk anlamlıdır
     if vim.bo.filetype == 'markdown' then return end
+    -- readonly/nomodifiable buffer'da :s E21 fırlatır (ör. suda ile açılan dosya)
+    if not vim.bo.modifiable then return end
     local view = vim.fn.winsaveview()
     vim.cmd([[keeppatterns %s/\s\+$//e]])
     vim.fn.winrestview(view)
