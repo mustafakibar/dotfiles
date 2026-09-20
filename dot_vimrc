@@ -1,17 +1,17 @@
-" ~/.vimrc — plugin gerektirmeyen acil-durum config'i.
+" ~/.vimrc — plugin-free fallback configuration.
 "
-" Bu makinede /usr/bin/vim aslında nvim'e symlink; asıl Neovim config'i
-" ~/.config/nvim altındadır. Bu dosya şunlar için vardır:
-"   - vim.tiny (kurtarma modu, minimal kapsayıcılar)
-"   - Neovim'in olmadığı uzak sunucular
-"   - root shell'leri
+" On this machine /usr/bin/vim is a symlink to nvim, and the real Neovim
+" configuration lives in ~/.config/nvim. This file exists for:
+"   - vim.tiny (rescue mode, minimal containers)
+"   - remote servers without Neovim
+"   - root shells
 "
-" YAPI: Katman 1 her vim derlemesinde çalışır. Katman 2 tamamen
-" 'if 1 ... endif' içindedir; +eval olmayan derlemeler onu atlar.
-" Bu yüzden Katman 2'ye yeni satır eklerken bloğun DIŞINA taşma.
+" LAYOUT: layer 1 runs on every vim build. Layer 2 sits entirely inside
+" 'if 1 ... endif' and is skipped by builds without +eval, so when adding
+" lines to layer 2, keep them INSIDE the block.
 
 " ══════════════════════════════════════════════════════════════════════
-" Katman 1 — özellik gerektirmeyen çekirdek
+" Layer 1 — core, requires no compiled features
 " ══════════════════════════════════════════════════════════════════════
 set nocompatible
 
@@ -47,11 +47,11 @@ set autoread
 set lazyredraw
 set nrformats-=octal
 
-" Yerleşik bulucu: :find ile alt dizinlerde ara (CtrlP'nin yerine)
+" Built-in finder: :find searches subdirectories, standing in for CtrlP
 set path+=**
 set wildignore+=*/node_modules/*,*/.git/*,*/dist/*,*/build/*,*/.next/*
 
-" ── tuşlar (mapping komutları +eval gerektirmez) ──────────────────────
+" ── keymaps (mapping commands do not need +eval) ─────────────────────
 nnoremap <C-q> :q!<CR>
 nnoremap <C-s> :w<CR>
 nnoremap <F3>  :set hlsearch!<CR>
@@ -68,14 +68,14 @@ nnoremap <a-right> gt
 nnoremap <a-left>  gT
 nnoremap <silent> <S-t> :tabnew<CR>
 
-" nvim config'iyle tutarlı olsun diye eklendi (eski .vimrc'de yoktu)
+" Added for consistency with the nvim config; the old .vimrc lacked it.
 inoremap jk <Esc>
 
-" görsel modda girintiyi koru
+" keep the selection when indenting in visual mode
 vnoremap < <gv
 vnoremap > >gv
 
-" imleci parantez/tırnak içine al
+" place the cursor inside the pair
 inoremap <> <><Left>
 inoremap () ()<Left>
 inoremap {} {}<Left>
@@ -84,7 +84,7 @@ inoremap "" ""<Left>
 inoremap '' ''<Left>
 inoremap `` ``<Left>
 
-" insert modunda ok tuşu yerine
+" arrow-key replacements in insert mode
 inoremap <C-k> <Up>
 inoremap <C-j> <Down>
 inoremap <C-h> <Left>
@@ -92,7 +92,7 @@ inoremap <C-l> <Right>
 inoremap <C-u> <Esc>ui
 
 " ══════════════════════════════════════════════════════════════════════
-" Katman 2 — +eval gerektiren her şey
+" Layer 2 — everything that needs +eval
 " ══════════════════════════════════════════════════════════════════════
 if 1
   let mapleader = ','
@@ -135,7 +135,7 @@ if 1
     set listchars=tab:>\ ,trail:.,extends:>,precedes:<
   endif
 
-  " ── kalıcı undo ────────────────────────────────────────────────────
+  " ── persistent undo ────────────────────────────────────────────────
   if has('persistent_undo')
     let s:undodir = expand('~/.local/state/vim/undo')
     if !isdirectory(s:undodir)
@@ -147,7 +147,7 @@ if 1
     endif
   endif
 
-  " ── statusline (airline'ın yerine) ─────────────────────────────────
+  " ── statusline (standing in for airline) ───────────────────────────
   if has('statusline')
     set statusline=
     set statusline+=\ %f
@@ -168,14 +168,14 @@ if 1
   let g:netrw_winsize = 25
   let g:netrw_hide = 0
 
-  " ── matchit: % ile if/endif, açılış/kapanış etiketi eşleştirme ─────
+  " ── matchit: % jumps between if/endif and open/close tags ──────────
   if has('packages')
     silent! packadd! matchit
   else
     silent! runtime macros/matchit.vim
   endif
 
-  " ── imleç şekli: normal blok, insert çizgi ─────────────────────────
+  " ── cursor shape: block in normal mode, bar in insert ──────────────
   let &t_SI = "\e[6 q"
   let &t_SR = "\e[4 q"
   let &t_EI = "\e[2 q"
@@ -184,7 +184,7 @@ if 1
   let &t_ZH = "\e[3m"
   let &t_ZR = "\e[23m"
 
-  " ── leader tuşları ─────────────────────────────────────────────────
+  " ── leader keymaps ─────────────────────────────────────────────────
   nnoremap <leader>h :nohlsearch<CR>
   nnoremap <leader>w :w<CR>
   nnoremap <leader>q :q<CR>
@@ -201,7 +201,7 @@ if 1
   if has('autocmd')
     augroup vimrc_restore_cursor
       autocmd!
-      " dosyayı en son bırakılan satırda aç
+      " reopen the file on the last edited line
       autocmd BufReadPost *
         \ if line("'\"") >= 1 && line("'\"") <= line("$") && &filetype !~# 'commit'
         \ |   execute "normal! g`\""
@@ -210,9 +210,9 @@ if 1
 
     augroup vimrc_misc
       autocmd!
-      " insert modundan çıkarken paste modunu kapat
+      " leave paste mode when leaving insert
       autocmd InsertLeave * set nopaste
-      " yardım pencerelerini dikey aç
+      " open help windows vertically
       autocmd FileType help wincmd L
     augroup END
   endif

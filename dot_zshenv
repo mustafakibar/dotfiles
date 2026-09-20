@@ -1,10 +1,10 @@
-# ~/.zshenv — HER zsh çağrısında okunur (script'ler ve non-login shell'ler dahil).
+# ~/.zshenv — read on EVERY zsh invocation, including scripts and non-login shells.
 #
-# PATH'i burada kuruyoruz, .zprofile'da değil: çoğu terminal emülatörü zsh'i
-# login OLMAYAN interaktif shell olarak başlatır ve .zprofile'ı hiç okumaz.
+# PATH is set up here rather than in .zprofile: most terminal emulators start
+# zsh as a NON-login interactive shell and never read .zprofile.
 #
-# Sentinel ihraç edilir → alt shell'ler PATH'i miras alır ve bu bloğu atlar.
-# Ortamı yeniden yüklemek için: reload   (alias, sentinel'i sıfırlar)
+# The sentinel is exported, so subshells inherit PATH and skip this block.
+# To reload the environment: reload   (the alias clears the sentinel)
 
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
@@ -13,5 +13,5 @@ if [[ -z $KB_ENV_LOADED ]]; then
   [[ -r $XDG_CONFIG_HOME/shell/env.sh ]] && source "$XDG_CONFIG_HOME/shell/env.sh"
 fi
 
-# PATH ve fpath'i otomatik tekilleştir — env.sh'ın kontrollerine ikinci güvence.
+# Deduplicate PATH and fpath automatically — a second guard behind env.sh.
 typeset -U path fpath

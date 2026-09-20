@@ -1,3 +1,3 @@
-# ~/.bash_aliases — geriye dönük uyumluluk kabuğu.
-# Gerçek içerik ~/.config/shell/aliases.sh içinde (bash ve zsh ortak).
+# ~/.bash_aliases — backwards-compatibility shim.
+# The real content lives in ~/.config/shell/aliases.sh, shared by bash and zsh.
 [ -r "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh"

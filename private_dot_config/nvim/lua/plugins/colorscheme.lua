@@ -2,7 +2,7 @@ return {
   {
     'navarasu/onedark.nvim',
     lazy = false,
-    priority = 1000,       -- diğer her şeyden önce yüklensin
+    priority = 1000,       -- load before everything else
     opts = {
       style = 'dark',
       transparent = false,

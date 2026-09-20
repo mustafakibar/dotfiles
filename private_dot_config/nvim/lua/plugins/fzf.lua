@@ -1,13 +1,13 @@
 -- ~/.config/nvim/lua/plugins/fzf.lua
 
--- ── git worktree: fzf-lua üzerine ince sarmalayıcı ───────────────────
--- Eski config telescope'un git-worktree eklentisini kullanıyordu; fzf-lua'da
--- böyle bir eklenti yok ve plugin'in kendisi zaten git komutlarının ince bir
--- sarmalayıcısı. Doğrudan git'i çağırıyoruz.
+-- ── git worktree: a thin wrapper on top of fzf-lua ───────────────────
+-- The old config used telescope's git-worktree extension. fzf-lua has no
+-- such extension, and that plugin was itself a thin wrapper around git
+-- commands, so git is called directly here.
 local function worktree_list()
   local lines = vim.fn.systemlist({ 'git', 'worktree', 'list' })
   if vim.v.shell_error ~= 0 then
-    vim.notify('Bir git deposunda değilsin', vim.log.levels.WARN)
+    vim.notify('Not inside a git repository', vim.log.levels.WARN)
     return
   end
   require('fzf-lua').fzf_exec(lines, {
@@ -25,7 +25,7 @@ local function worktree_list()
 end
 
 local function worktree_create()
-  vim.ui.input({ prompt = 'Yeni worktree için dal adı: ' }, function(branch)
+  vim.ui.input({ prompt = 'Branch name for the new worktree: ' }, function(branch)
     if not branch or branch == '' then return end
     local parent = vim.fn.fnamemodify(vim.fn.getcwd(), ':h')
     local path = parent .. '/' .. branch
@@ -35,7 +35,7 @@ local function worktree_create()
       return
     end
     vim.cmd.tcd(path)
-    vim.notify('Worktree oluşturuldu: ' .. path)
+    vim.notify('Worktree created: ' .. path)
   end)
 end
 
@@ -45,22 +45,22 @@ return {
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     cmd = 'FzfLua',
     keys = {
-      -- eski telescope tuşları birebir korundu
-      { 'ff', function() require('fzf-lua').files() end,            desc = 'Dosya bul' },
+      -- the old telescope keymaps are kept as they were
+      { 'ff', function() require('fzf-lua').files() end,            desc = 'Find files' },
       { 'fb', function() require('fzf-lua').buffers() end,          desc = 'Buffer bul' },
       { 'fg', function() require('fzf-lua').live_grep() end,        desc = 'Metin ara' },
-      { 'fh', function() require('fzf-lua').helptags() end,         desc = 'Yardım ara' },
-      { 'fd', function() require('fzf-lua').diagnostics_document() end, desc = 'Tanılamalar' },
-      { 'fw', worktree_list,   desc = 'Worktree seç' },
-      { 'fc', worktree_create, desc = 'Worktree oluştur' },
-      -- LSP: çok sonuçlu olanlar picker'dan daha iyi okunuyor
-      { 'gd', function() require('fzf-lua').lsp_definitions({ jump1 = true }) end, desc = 'LSP: tanıma git' },
+      { 'fh', function() require('fzf-lua').helptags() end,         desc = 'Search help' },
+      { 'fd', function() require('fzf-lua').diagnostics_document() end, desc = 'Diagnostics' },
+      { 'fw', worktree_list,   desc = 'Pick worktree' },
+      { 'fc', worktree_create, desc = 'Create worktree' },
+      -- LSP: queries with many results read better in a picker
+      { 'gd', function() require('fzf-lua').lsp_definitions({ jump1 = true }) end, desc = 'LSP: go to definition' },
       { 'gR', function() require('fzf-lua').lsp_references({ jump1 = true }) end,  desc = 'LSP: referanslar' },
       { 'gs', function() require('fzf-lua').lsp_document_symbols() end,           desc = 'LSP: semboller' },
     },
     opts = {
-      -- 'telescope' profili: fzf-lua'nın telescope görünüm ve tuşlarına en yakın
-      -- hazır ayarı. Kas hafızası korunsun diye seçildi.
+      -- The 'telescope' profile is fzf-lua's closest preset to telescope's
+      -- layout and keymaps, chosen so muscle memory still works.
       'telescope',
       winopts = {
         height = 0.85,

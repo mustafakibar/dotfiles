@@ -7,7 +7,7 @@ return {
     opts = {
       options = {
         theme = 'onedark',
-        globalstatus = true,           -- laststatus=3 ile uyumlu
+        globalstatus = true,           -- matches laststatus=3
         section_separators = { left = '', right = '' },
         component_separators = { left = '', right = '' },
       },
@@ -19,7 +19,7 @@ return {
   },
 
   {
-    'akinsho/bufferline.nvim',       -- eski ad 'nvim-bufferline.lua' idi
+    'akinsho/bufferline.nvim',       -- formerly named 'nvim-bufferline.lua'
     event = 'VeryLazy',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     opts = {
@@ -34,11 +34,11 @@ return {
   },
 
   {
-    'nvim-tree/nvim-tree.lua',       -- eski org 'kyazdani42' idi
+    'nvim-tree/nvim-tree.lua',       -- formerly under the 'kyazdani42' org
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     cmd = { 'NvimTreeToggle', 'NvimTreeFindFile' },
     keys = {
-      { '<leader>t', '<cmd>NvimTreeToggle<CR>', desc = 'Dosya ağacı' },
+      { '<leader>t', '<cmd>NvimTreeToggle<CR>', desc = 'File tree' },
     },
     opts = {
       hijack_cursor = true,
@@ -51,7 +51,7 @@ return {
   },
 
   {
-    'catgoose/nvim-colorizer.lua',   -- norcalli/* arşivlendi
+    'catgoose/nvim-colorizer.lua',   -- norcalli/* is archived
     event = 'BufReadPre',
     opts = {
       filetypes = { 'css', 'scss', 'html', 'javascript', 'typescript',

@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Temiz bir makinede bu dotfiles'ın ihtiyaç duyduğu HARİCİ araçları kurar.
+# Installs the EXTERNAL tools these dotfiles depend on, on a fresh machine.
 #
-# chezmoi yalnızca config DOSYALARINI yönetir; oh-my-zsh, eza, starship gibi
-# ikilileri değil. Bu script o boşluğu kapatır.
+# chezmoi manages config FILES, not the binaries behind them — oh-my-zsh, eza,
+# starship and friends. This script closes that gap.
 #
-# Tasarım kararları:
-#   * `run_once_` ön eki YOK: `chezmoi apply` sırasında kendiliğinden
-#     çalışmasını istemiyoruz. Elle çağrılır.
-#   * Idempotent: kurulu olanı atlar, iki kez çalıştırmak güvenlidir.
-#   * sudo GEREKTİREN adımları KENDİ BAŞINA yapmaz, sadece komutu yazdırır.
+# Design decisions:
+#   * NO `run_once_` prefix: it should not run by itself during
+#     `chezmoi apply`. Invoke it by hand.
+#   * Idempotent: skips what is installed, safe to run twice.
+#   * Never performs the steps that need sudo; it only prints the command.
 #
-# Kullanım: ~/.local/share/chezmoi/scripts/bootstrap-tools.sh
+# Usage: ~/.local/share/chezmoi/scripts/bootstrap-tools.sh
 set -uo pipefail
 
 ZSH_DIR="${ZSH:-$HOME/.oh-my-zsh}"
@@ -26,21 +26,21 @@ need_apt() { command -v "$1" >/dev/null 2>&1 || APT_MISSING+=("$2"); }
 
 echo "── oh-my-zsh ─────────────────────────────────────────────────────────"
 if [ -r "$ZSH_DIR/oh-my-zsh.sh" ]; then
-  ok "oh-my-zsh kurulu"
+  ok "oh-my-zsh installed"
 else
-  run "oh-my-zsh klonlanıyor"
+  run "cloning oh-my-zsh"
   git clone --depth=1 https://github.com/ohmyzsh/ohmyzsh.git "$ZSH_DIR" \
-    || warn "oh-my-zsh klonlanamadı"
+    || warn "could not clone oh-my-zsh"
 fi
 
-echo "── zsh eklentileri ───────────────────────────────────────────────────"
+echo "── zsh plugins ───────────────────────────────────────────────────────"
 clone_plugin() {
   local name="$1" url="$2" dest="$ZSH_CUSTOM/plugins/$1"
   if [ -d "$dest/.git" ]; then
     ok "$name"
   else
-    run "$name klonlanıyor"
-    git clone --depth=1 "$url" "$dest" || warn "$name klonlanamadı"
+    run "cloning $name"
+    git clone --depth=1 "$url" "$dest" || warn "could not clone $name"
   fi
 }
 mkdir -p "$ZSH_CUSTOM/plugins"
@@ -48,9 +48,9 @@ clone_plugin zsh-autosuggestions      https://github.com/zsh-users/zsh-autosugge
 clone_plugin zsh-completions          https://github.com/zsh-users/zsh-completions.git
 clone_plugin zsh-syntax-highlighting  https://github.com/zsh-users/zsh-syntax-highlighting.git
 
-echo "── ~/.local/bin sembolik bağları ─────────────────────────────────────"
+echo "── ~/.local/bin symlinks ─────────────────────────────────────────────"
 mkdir -p "$LOCAL_BIN"
-# Debian/Ubuntu bu ikilileri fdfind/batcat adıyla paketler.
+# Debian and Ubuntu ship these binaries as fdfind and batcat.
 for pair in "fd:fdfind" "bat:batcat"; do
   want="${pair%%:*}" have="${pair##*:}"
   if command -v "$want" >/dev/null 2>&1; then
@@ -59,42 +59,42 @@ for pair in "fd:fdfind" "bat:batcat"; do
     run "$LOCAL_BIN/$want -> $(command -v "$have")"
     ln -sf "$(command -v "$have")" "$LOCAL_BIN/$want"
   else
-    warn "$want ve $have yok (aşağıdaki apt listesine bakın)"
+    warn "neither $want nor $have found; see the apt list below"
   fi
 done
 
-echo "── kullanıcı alanı kurulumları ───────────────────────────────────────"
+echo "── user-space installs ───────────────────────────────────────────────"
 if command -v starship >/dev/null 2>&1; then
   ok "starship"
 else
-  run "starship kuruluyor ($LOCAL_BIN)"
+  run "installing starship into $LOCAL_BIN"
   curl -fsSL https://starship.rs/install.sh | sh -s -- --yes --bin-dir "$LOCAL_BIN" \
-    || warn "starship kurulamadı"
+    || warn "could not install starship"
 fi
 
 if command -v fnm >/dev/null 2>&1; then
   ok "fnm"
 else
-  run "fnm kuruluyor"
+  run "installing fnm"
   curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell \
-    || warn "fnm kurulamadı"
+    || warn "could not install fnm"
 fi
 
 echo "── tree-sitter CLI ───────────────────────────────────────────────────"
-# nvim-treesitter 'main' branch parser derlemek için >= 0.26.1 ister.
+# nvim-treesitter's 'main' branch needs >= 0.26.1 to build parsers.
 TS_MIN="0.26.1"
 ts_ver="$(tree-sitter --version 2>/dev/null | awk '{print $2}')"
 if [ -n "$ts_ver" ] && [ "$(printf '%s\n%s\n' "$TS_MIN" "$ts_ver" | sort -V | head -1)" = "$TS_MIN" ]; then
   ok "tree-sitter $ts_ver (>= $TS_MIN)"
 elif command -v cargo >/dev/null 2>&1; then
-  run "tree-sitter-cli derleniyor (birkaç dakika sürebilir)"
-  cargo install tree-sitter-cli --locked || warn "tree-sitter-cli kurulamadı"
+  run "building tree-sitter-cli (this can take a few minutes)"
+  cargo install tree-sitter-cli --locked || warn "could not install tree-sitter-cli"
 else
-  warn "tree-sitter ${ts_ver:-yok} — gereken >= $TS_MIN, ama cargo da yok."
-  warn "  rustup kurun: https://rustup.rs  sonra: cargo install tree-sitter-cli --locked"
+  warn "tree-sitter ${ts_ver:-missing} — need >= $TS_MIN, and cargo is absent too."
+  warn "  install rustup from https://rustup.rs, then: cargo install tree-sitter-cli --locked"
 fi
 
-echo "── sistem paketleri ──────────────────────────────────────────────────"
+echo "── system packages ───────────────────────────────────────────────────"
 need_apt zsh      zsh
 need_apt git      git
 need_apt nvim     neovim
@@ -106,11 +106,11 @@ need_apt fdfind   fd-find
 need_apt batcat   bat
 need_apt gcc      build-essential
 if [ "${#APT_MISSING[@]}" -eq 0 ]; then
-  ok "hepsi kurulu"
+  ok "all present"
 else
-  warn "eksik: ${APT_MISSING[*]}"
+  warn "missing: ${APT_MISSING[*]}"
   warn "  sudo apt update && sudo apt install -y ${APT_MISSING[*]}"
 fi
 
 echo
-echo "Bitti. Yeni bir shell açın:  exec zsh -l"
+echo "Done. Start a new shell with:  exec zsh -l"

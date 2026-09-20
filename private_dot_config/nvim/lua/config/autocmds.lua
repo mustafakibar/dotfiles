@@ -1,13 +1,13 @@
 -- ~/.config/nvim/lua/config/autocmds.lua
 --
--- Eski kibar.lua ilk satırında 'vim.cmd("autocmd!")' çağırıyordu: bu, plugin'lerin
--- kendi autocmd'lerini de silen bir tuzaktır. Artık her grup kendi augroup'unda.
+-- The old config called vim.cmd('autocmd!') on its first line, which also
+-- wiped the autocmds registered by plugins. Every group now owns its augroup.
 
 local function augroup(name)
   return vim.api.nvim_create_augroup('kb_' .. name, { clear = true })
 end
 
--- yank'i kısaca vurgula
+-- briefly highlight the yanked text
 vim.api.nvim_create_autocmd('TextYankPost', {
   group = augroup('highlight_yank'),
   callback = function()
@@ -15,7 +15,7 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- dosyayı en son bırakılan satırda aç
+-- reopen the file on the last edited line
 vim.api.nvim_create_autocmd('BufReadPost', {
   group = augroup('last_loc'),
   callback = function(ev)
@@ -29,13 +29,13 @@ vim.api.nvim_create_autocmd('BufReadPost', {
   end,
 })
 
--- kaydederken satır sonu boşluklarını temizle
+-- strip trailing whitespace on save
 vim.api.nvim_create_autocmd('BufWritePre', {
   group = augroup('trim_whitespace'),
   callback = function()
-    -- markdown'da satır sonundaki iki boşluk anlamlıdır
+    -- two trailing spaces are meaningful in markdown
     if vim.bo.filetype == 'markdown' then return end
-    -- readonly/nomodifiable buffer'da :s E21 fırlatır (ör. suda ile açılan dosya)
+    -- :s throws E21 on a readonly or nomodifiable buffer, e.g. one opened with suda
     if not vim.bo.modifiable then return end
     local view = vim.fn.winsaveview()
     vim.cmd([[keeppatterns %s/\s\+$//e]])
@@ -43,7 +43,7 @@ vim.api.nvim_create_autocmd('BufWritePre', {
   end,
 })
 
--- eksik dizinleri kaydederken oluştur
+-- create missing directories on save
 vim.api.nvim_create_autocmd('BufWritePre', {
   group = augroup('auto_mkdir'),
   callback = function(ev)
@@ -53,13 +53,13 @@ vim.api.nvim_create_autocmd('BufWritePre', {
   end,
 })
 
--- insert modundan çıkarken paste'i kapat (eski davranış korundu)
+-- leave paste mode when leaving insert, matching the previous behaviour
 vim.api.nvim_create_autocmd('InsertLeave', {
   group = augroup('no_paste'),
   callback = function() vim.opt.paste = false end,
 })
 
--- yardımcı pencereleri q ile kapat
+-- close helper windows with q
 vim.api.nvim_create_autocmd('FileType', {
   group = augroup('close_with_q'),
   pattern = { 'help', 'qf', 'man', 'checkhealth', 'lspinfo', 'lazy', 'mason' },
@@ -69,7 +69,7 @@ vim.api.nvim_create_autocmd('FileType', {
   end,
 })
 
--- terminal buffer'larında numara ve signcolumn kapalı
+-- no line numbers or signcolumn in terminal buffers
 vim.api.nvim_create_autocmd('TermOpen', {
   group = augroup('term'),
   callback = function()

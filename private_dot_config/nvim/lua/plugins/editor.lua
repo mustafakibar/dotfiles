@@ -17,11 +17,11 @@ return {
         local function m(mode, lhs, rhs, desc)
           vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, desc = 'Git: ' .. desc })
         end
-        m('n', ']c', function() gs.nav_hunk('next') end, 'Sonraki değişiklik')
-        m('n', '[c', function() gs.nav_hunk('prev') end, 'Önceki değişiklik')
-        m('n', '<leader>gp', gs.preview_hunk,      'Değişikliği önizle')
-        m('n', '<leader>gb', gs.blame_line,        'Satır blame')
-        m('n', '<leader>gr', gs.reset_hunk,        'Değişikliği geri al')
+        m('n', ']c', function() gs.nav_hunk('next') end, 'Next hunk')
+        m('n', '[c', function() gs.nav_hunk('prev') end, 'Previous hunk')
+        m('n', '<leader>gp', gs.preview_hunk,      'Preview hunk')
+        m('n', '<leader>gb', gs.blame_line,        'Blame line')
+        m('n', '<leader>gr', gs.reset_hunk,        'Reset hunk')
         m('n', '<leader>gd', gs.diffthis,          'Diff')
       end,
     },
@@ -33,7 +33,7 @@ return {
     opts = { check_ts = true },
     config = function(_, opts)
       require('nvim-autopairs').setup(opts)
-      -- nvim-cmp ile entegrasyon: fonksiyon seçilince parantez eklensin
+      -- nvim-cmp integration: add parentheses when a function is selected
       local ok, cmp = pcall(require, 'cmp')
       if ok then
         cmp.event:on('confirm_done',

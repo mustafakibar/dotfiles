@@ -1,37 +1,38 @@
-# ~/.config/shell/env.sh — bash ve zsh ortak ORTAM katmanı.
+# ~/.config/shell/env.sh — ENVIRONMENT layer shared by bash and zsh.
 #
-# PATH ve ortam değişkenlerinin TEK SAHİBİ. Başka hiçbir dosya PATH'e girdi eklemez.
-# Idempotent: kaç kez source edilirse edilsin PATH büyümez.
-# Alias TANIMLAMAZ — onlar aliases.sh'ta (zsh script'lerinde alias genişletilir).
+# THE SINGLE OWNER of PATH and the environment variables. No other file adds
+# entries to PATH. Idempotent: PATH does not grow however often it is sourced.
+# Defines NO aliases — those live in aliases.sh, because zsh expands aliases
+# inside scripts.
 #
-# POSIX sh sözdizimi. bash/zsh'a özgü yapı kullanma.
+# POSIX sh syntax. Do not use bash- or zsh-specific constructs.
 
-# ─── PATH yardımcıları ────────────────────────────────────────────────────
-# Dizin mevcut değilse veya PATH'te zaten varsa hiçbir şey yapmaz.
+# ─── PATH helpers ─────────────────────────────────────────────────────────
+# Does nothing when the directory is missing or already on PATH.
 _kb_path_prepend() {
   [ -d "$1" ] || return 0
-  # $1 tırnak içinde olduğu için case deseninde LİTERAL olarak eşleşir;
-  # glob metakarakteri içeren dizin adları da doğru karşılaştırılır.
+  # $1 is quoted, so it matches LITERALLY inside the case pattern; directory
+  # names containing glob metacharacters compare correctly as well.
   case ":${PATH}:" in *":$1:"*) return 0 ;; esac
   PATH="$1${PATH:+:$PATH}"
 }
 
 _kb_path_append() {
   [ -d "$1" ] || return 0
-  # $1 tırnak içinde olduğu için case deseninde LİTERAL olarak eşleşir;
-  # glob metakarakteri içeren dizin adları da doğru karşılaştırılır.
+  # $1 is quoted, so it matches LITERALLY inside the case pattern; directory
+  # names containing glob metacharacters compare correctly as well.
   case ":${PATH}:" in *":$1:"*) return 0 ;; esac
   PATH="${PATH:+$PATH:}$1"
 }
 
-# ─── PATH: öncelikli ──────────────────────────────────────────────────────
+# ─── PATH: highest priority ───────────────────────────────────────────────
 _kb_path_prepend "$HOME/bin"
 _kb_path_prepend "$HOME/.local/bin"
-# Eskiden ~/.cargo/env'in yaptığı iş. O dosya artık source EDİLMİYOR
-# (spec B6: .zshenv ve .profile'da iki kez source ediliyordu).
+# What ~/.cargo/env used to do. That file is no longer sourced; it was being
+# pulled in twice, from both .zshenv and .profile.
 _kb_path_prepend "$HOME/.cargo/bin"
 
-# ─── PATH: geliştirme araçları ────────────────────────────────────────────
+# ─── PATH: development tools ──────────────────────────────────────────────
 _kb_path_append "$HOME/flutter/bin"
 _kb_path_append "$HOME/bin/chezmoi"
 _kb_path_append "$HOME/.deno/bin"
@@ -52,7 +53,8 @@ if [ -d /mnt/XPG-Data/Android/sdk ]; then
 fi
 
 # ─── Java ─────────────────────────────────────────────────────────────────
-# readlink+dirname süreç doğurur; JAVA_HOME zaten varsa atla (idempotentlik).
+# readlink and dirname fork processes; skip when JAVA_HOME is already set,
+# which also keeps this block idempotent.
 if [ -z "${JAVA_HOME:-}" ] && command -v java >/dev/null 2>&1; then
   _kb_java=$(readlink -f "$(command -v java)")
   JAVA_HOME=$(dirname "$(dirname "$_kb_java")")
@@ -73,15 +75,15 @@ export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 export OLLAMA_MODELS="/mnt/SEAGATE-Data/ollama"
 export OLLAMA_HOST="0.0.0.0"
 
-# ─── Editör ve pager ──────────────────────────────────────────────────────
+# ─── Editor and pager ─────────────────────────────────────────────────────
 export EDITOR=nvim
 export VISUAL=nvim
 export PAGER=less
 export LESS='-R -F -X -i -M'
 export MANPAGER='nvim +Man!'
 
-# ─── Gizli değerler ───────────────────────────────────────────────────────
-# chezmoi yönetiminde DEĞİL ve öyle kalmalı.
+# ─── Secrets ──────────────────────────────────────────────────────────────
+# NOT managed by chezmoi, and it should stay that way.
 [ -f "$HOME/.profile_secrets" ] && . "$HOME/.profile_secrets"
 
 return 0 2>/dev/null || true

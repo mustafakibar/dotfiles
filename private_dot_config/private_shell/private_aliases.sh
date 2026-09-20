@@ -1,9 +1,9 @@
-# ~/.config/shell/aliases.sh — yalnızca İNTERAKTİF shell'lerden source edilir.
+# ~/.config/shell/aliases.sh — sourced from INTERACTIVE shells only.
 #
-# Buraya alias koy, env.sh'a koyma: .zshenv her zsh çağrısında okunur ve
-# zsh script'lerinde alias'lar genişletilir — sızarlarsa script'leri bozar.
+# Put aliases here, not in env.sh: .zshenv is read on every zsh invocation
+# and zsh expands aliases inside scripts, so leaking them breaks scripts.
 
-# ─── sistem ───────────────────────────────────────────────────────────────
+# ─── system ───────────────────────────────────────────────────────────────
 alias upt='sudo apt update'
 alias upg='sudo -- sh -c "apt update && apt upgrade"'
 alias aptclean='sudo apt autoremove -y'
@@ -11,19 +11,19 @@ alias c='clear'
 alias e='exit'
 alias q='exit'
 
-# ─── güç ──────────────────────────────────────────────────────────────────
+# ─── power ──────────────────────────────────────────────────────────────────
 alias rb='sudo /sbin/reboot'
 alias po='sudo /sbin/poweroff'
-# DİKKAT: eskiden 'sd' idi. sd(1) (sed yerine geçen arama-değiştirme aracı)
-# bu sistemde kurulu ve alias onu gölgeliyordu. Yeniden adlandırıldı.
+# NOTE: this used to be 'sd'. sd(1), the find-and-replace tool that stands in
+# for sed, is installed here and the alias was shadowing it, hence the rename.
 alias shutd='sudo /sbin/shutdown'
 
-# ─── gezinme ──────────────────────────────────────────────────────────────
+# ─── navigation ──────────────────────────────────────────────────────────────
 alias ..='cd ..'
-alias ...='cd ../../../'   # not: 3 seviye — mevcut davranış korundu
+alias ...='cd ../../../'   # note: three levels, matching the previous behaviour
 alias ~='cd ~'
 
-# ─── listeleme ────────────────────────────────────────────────────────────
+# ─── listing ────────────────────────────────────────────────────────────
 if command -v eza >/dev/null 2>&1; then
   alias ls='eza --icons=auto --group-directories-first'
   alias ll='eza --icons=auto --group-directories-first --long --git'
@@ -38,25 +38,25 @@ else
   alias ltree='ls -R'
 fi
 
-# ─── standart araçlar ─────────────────────────────────────────────────────
+# ─── standard tools ─────────────────────────────────────────────────────
 alias grep='grep --color=auto'
 alias mv='mv -i'
 alias cp='cp -i'
 alias rm='rm -I --preserve-root'
 
-# 'find' ve 'cat' BİLEREK alias'lanmıyor: fd(1) farklı sözdizimi bekler ve
-# kopyalanan komutları bozar. Her ikisi de ~/.local/bin altında kendi
-# isimleriyle mevcut (fd → fdfind, bat → batcat).
+# 'find' and 'cat' are DELIBERATELY not aliased: fd(1) expects a different
+# syntax and would break commands pasted from elsewhere. Both are available
+# under their own names in ~/.local/bin (fd -> fdfind, bat -> batcat).
 
-# ─── editör ───────────────────────────────────────────────────────────────
+# ─── editor ───────────────────────────────────────────────────────────────
 alias vim='nvim'
 alias vi='nvim'
 
-# ─── ağ / bilgi ───────────────────────────────────────────────────────────
-alias ports='ss -tulanp'          # netstat (net-tools) kullanımdan kalktı
+# ─── network / info ───────────────────────────────────────────────────────────
+alias ports='ss -tulanp'          # netstat (net-tools) is deprecated
 alias myip='curl -s ifconfig.me; echo'
 
 # ─── shell ────────────────────────────────────────────────────────────────
-# env.sh sentinel'i ihraç edildiği için 'exec zsh' tek başına ortamı
-# yeniden yüklemez; bu alias sentinel'i sıfırlar.
+# The env.sh sentinel is exported, so 'exec zsh' alone does not reload the
+# environment; this alias clears the sentinel first.
 alias reload='unset KB_ENV_LOADED; exec "$SHELL" -l'

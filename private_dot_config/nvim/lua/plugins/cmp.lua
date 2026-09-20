@@ -18,8 +18,8 @@ return {
           require('luasnip.loaders.from_vscode').lazy_load()
         end,
       },
-      -- Eski config'de EKSİKTİ: LuaSnip kuruluydu ama cmp kaynağı yoktu,
-      -- bu yüzden snippet'ler tamamlama menüsünde hiç görünmüyordu (spec B8).
+      -- MISSING from the old config: LuaSnip was installed but had no cmp
+      -- source, so its snippets never appeared in the completion menu.
       'saadparwaiz1/cmp_luasnip',
     },
     config = function()
@@ -80,7 +80,7 @@ return {
         experimental = { ghost_text = true },
       })
 
-      -- arama ve komut satırı tamamlaması
+      -- search and command-line completion
       cmp.setup.cmdline({ '/', '?' }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = { { name = 'buffer' } },

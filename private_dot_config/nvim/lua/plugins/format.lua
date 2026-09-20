@@ -1,6 +1,7 @@
 -- ~/.config/nvim/lua/plugins/format.lua
 
--- Proje kökünde biome.json varsa biome, yoksa prettierd → prettier zinciri.
+-- Use biome when biome.json sits at the project root, otherwise fall back
+-- from prettierd to prettier.
 local function web_formatters(bufnr)
   local conform = require('conform')
   local has_biome_cfg = vim.fs.root(bufnr, { 'biome.json', 'biome.jsonc' }) ~= nil
@@ -20,7 +21,7 @@ return {
         '<leader>f',
         function() require('conform').format({ async = true }) end,
         mode = { 'n', 'v' },
-        desc = 'Biçimlendir',
+        desc = 'Format',
       },
     },
     opts = {
@@ -42,8 +43,8 @@ return {
         yaml   = web_formatters,
         markdown = web_formatters,
       },
-      -- LSP fallback KAPALI: yalnızca yukarıda tanımlı biçimlendiriciler
-      -- çalışır, böylece davranış öngörülebilir olur.
+      -- LSP fallback is OFF: only the formatters defined above run, which
+      -- keeps the behaviour predictable.
       default_format_opts = { lsp_format = 'never' },
       format_on_save = { timeout_ms = 2000, lsp_format = 'never' },
     },
@@ -54,9 +55,9 @@ return {
     event = { 'BufReadPost', 'BufWritePost' },
     config = function()
       local lint = require('lint')
-      -- DİKKAT: eslint ve ruff zaten LSP sunucusu olarak çalışıyor (Task 7).
-      -- Burada onları TEKRARLAMIYORUZ — tanılamalar iki kez görünürdü.
-      -- nvim-lint yalnızca LSP'nin kapsamadığı alanlara bakıyor.
+      -- NOTE: eslint and ruff already run as LSP servers, so they are NOT
+      -- repeated here; their diagnostics would show up twice. nvim-lint only
+      -- covers what the language servers do not.
       lint.linters_by_ft = {
         markdown   = { 'markdownlint' },
         sh         = { 'shellcheck' },
@@ -67,7 +68,7 @@ return {
       vim.api.nvim_create_autocmd({ 'BufWritePost', 'BufReadPost', 'InsertLeave' }, {
         group = vim.api.nvim_create_augroup('kb_lint', { clear = true }),
         callback = function()
-          -- kurulu olmayan linter'lar sessizce atlanır
+          -- linters that are not installed are skipped silently
           require('lint').try_lint(nil, { ignore_errors = true })
         end,
       })

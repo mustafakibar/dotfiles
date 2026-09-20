@@ -2,8 +2,8 @@
 return {
   {
     'nvim-treesitter/nvim-treesitter',
-    branch = 'main',     -- main = tam yeniden yazım; Nvim 0.12+ gerektirir
-    lazy = false,        -- main branch lazy-load'u DESTEKLEMİYOR
+    branch = 'main',     -- main is a full rewrite and needs Nvim 0.12+
+    lazy = false,        -- the main branch does NOT support lazy-loading
     build = ':TSUpdate',
     config = function()
       require('nvim-treesitter').setup()
@@ -16,9 +16,9 @@ return {
         'typescript', 'vim', 'vimdoc', 'yaml',
       }
 
-      -- main branch'te ensure_installed yok; kurulum programatik.
-      -- install() zaten kurulu olanları atlar, ama yine de farkı hesaplıyoruz
-      -- ki her açılışta gereksiz iş yapılmasın.
+      -- The main branch has no ensure_installed; installation is programmatic.
+      -- install() skips what is already present, but the difference is still
+      -- computed so no needless work happens on every startup.
       local to_install = parsers
       local ok, cfg = pcall(require, 'nvim-treesitter.config')
       if ok and type(cfg.get_installed) == 'function' then
@@ -28,13 +28,13 @@ return {
         end, parsers)
       end
       if #to_install > 0 then
-        -- main branch parser derlemek için HARİCİ tree-sitter CLI (>= 0.26.1)
-        -- kullanır. Yoksa install() sessizce başarısız olur; gürültülü yapalım.
+        -- The main branch builds parsers with the EXTERNAL tree-sitter CLI
+        -- (>= 0.26.1). Without it install() fails silently, so make it loud.
         if vim.fn.executable('tree-sitter') == 0 then
           vim.schedule(function()
             vim.notify(
-              'nvim-treesitter: `tree-sitter` CLI bulunamadı, parser kurulamıyor.\n'
-                .. 'Kurulum: cargo install tree-sitter-cli --locked',
+              'nvim-treesitter: `tree-sitter` CLI not found, cannot install parsers.\n'
+                .. 'Install it with: cargo install tree-sitter-cli --locked',
               vim.log.levels.WARN
             )
           end)
@@ -44,21 +44,21 @@ return {
           end)
           if not ok_install then
             vim.schedule(function()
-              vim.notify('nvim-treesitter install() hatası: ' .. tostring(err), vim.log.levels.ERROR)
+              vim.notify('nvim-treesitter install() failed: ' .. tostring(err), vim.log.levels.ERROR)
             end)
           end
         end
       end
 
-      -- main branch highlight'ı KENDİ AÇMIYOR; vim.treesitter.start() gerekiyor.
+      -- The main branch does NOT enable highlighting itself; vim.treesitter.start() does.
       vim.api.nvim_create_autocmd('FileType', {
         group = vim.api.nvim_create_augroup('kb_treesitter', { clear = true }),
         callback = function(ev)
           local lang = vim.treesitter.language.get_lang(vim.bo[ev.buf].filetype)
           if not lang then return end
           if not pcall(vim.treesitter.language.add, lang) then return end
-          -- start() başarısız olursa (parser yok) indentexpr'i DEĞİŞTİRME;
-          -- aksi halde 'indents' sorgusu olmayan dillerde gg=G satırları düzleştirir.
+          -- If start() fails there is no parser, so leave indentexpr alone;
+          -- otherwise gg=G flattens files whose language has no 'indents' query.
           if not pcall(vim.treesitter.start, ev.buf, lang) then return end
           if vim.treesitter.query.get(lang, 'indents') then
             vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"

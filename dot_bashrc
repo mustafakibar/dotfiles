@@ -125,15 +125,16 @@ fi
 
 
 
-# ─── ortak katman ─────────────────────────────────────────────────────────
-# PATH/env: env.sh (sentinel korumalı — .profile zaten yüklediyse atlar)
+# ─── shared layer ─────────────────────────────────────────────────────────
+# PATH and env come from env.sh, behind the sentinel so it is skipped when
+# .profile already loaded it.
 if [ -z "${KB_ENV_LOADED:-}" ]; then
   KB_ENV_LOADED=1
   export KB_ENV_LOADED
   [ -r "$HOME/.config/shell/env.sh" ] && . "$HOME/.config/shell/env.sh"
 fi
 
-# Alias'lar yalnızca interaktif oturumda
+# Aliases only in interactive sessions.
 case $- in
   *i*) [ -r "$HOME/.config/shell/aliases.sh" ] && . "$HOME/.config/shell/aliases.sh" ;;
 esac

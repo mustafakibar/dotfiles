@@ -1,7 +1,7 @@
 -- ~/.config/nvim/init.lua
 
--- Leader lazy.nvim'den ÖNCE ayarlanmalı: plugin'lerin <leader> tuşları
--- yükleme anında çözülür.
+-- The leader must be set BEFORE lazy.nvim: plugin <leader> mappings are
+-- resolved at load time.
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
@@ -18,9 +18,9 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
   })
   if vim.v.shell_error ~= 0 then
     vim.api.nvim_echo({
-      { 'lazy.nvim klonlanamadı:\n', 'ErrorMsg' },
+      { 'Failed to clone lazy.nvim:\n', 'ErrorMsg' },
       { out, 'WarningMsg' },
-      { '\nBir tuşa bas...' },
+      { '\nPress any key...' },
     }, true, {})
     vim.fn.getchar()
     os.exit(1)
@@ -31,7 +31,7 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   spec = { { import = 'plugins' } },
   install = { colorscheme = { 'onedark', 'habamax' } },
-  checker = { enabled = true, notify = false },   -- güncelleme kontrolü, sessiz
+  checker = { enabled = true, notify = false },   -- check for updates, quietly
   change_detection = { notify = false },
   ui = { border = 'rounded' },
   performance = {
